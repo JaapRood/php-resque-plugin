@@ -2,6 +2,7 @@
 
 namespace Resque;
 use \Resque_Event;
+use \Resque_Job;
 
 class Plugin {
 
@@ -36,7 +37,7 @@ class Plugin {
 	 * @param  Resque_Job 	$job 	job for which to run the plugins
 	 * @param  string 		$hook 	which hook to run
 	 */
-	public static function notify_plugins(Resque $job, $hook) {
+	public static function notify_plugins(Resque_Job $job, $hook) {
 		$plugins = static::plugins($job, $hook);
 
 		foreach ($plugins as $plugin) {
