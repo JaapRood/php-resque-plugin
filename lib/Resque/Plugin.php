@@ -1,6 +1,7 @@
 <?php
 
 namespace Resque;
+use \Resque_Event;
 
 class Plugin {
 
