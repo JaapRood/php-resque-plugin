@@ -29,20 +29,30 @@ class Plugin {
 		$notifyMethod = $class ."::notify_plugins";
 
 		foreach ($hooks as $hook) {
-			Resque_Event::listen($hook, $notifyMethod);
+			Resque_Event::listen($hook, function($payload) use ($notifyMethod, $hook) {
+				call_user_func($notifyMethod, $hook, $payload);
+			});
 		}
 	}
 
 	/**
-	 * @param  Resque_Job 	$job 	job for which to run the plugins
-	 * @param  string 		$hook 	which hook to run
+	 * @param  string 	$hook 			which hook to run
+	 * @param  mixed 	$jobOrFailure 	job for which to run the plugins
 	 */
-	public static function notify_plugins(Resque_Job $job, $hook) {
+	public static function notify_plugins($hook, $jobOrFailure) {
+		if ($hook === 'onFailure') {
+			$job = $jobOrFailure['job'];
+			$exception = $jobOrFailure['exception'];
+		} else {
+			$job = $jobOrFailure;
+			$exception = null;
+		}
+
 		$plugins = static::plugins($job, $hook);
 
 		foreach ($plugins as $plugin) {
 			if (is_callable($plugin)) {
-				call_user_func($plugin, $job, $hook);
+				call_user_func($plugin, $job->getInstance(), $exception);
 			}
 		}
 	} 
