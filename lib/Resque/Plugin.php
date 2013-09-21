@@ -30,8 +30,11 @@ class Plugin {
 		$notifyMethod = $class ."::notify_plugins";
 
 		foreach ($hooks as $hook) {
-			Resque_Event::listen($hook, function($payload) use ($notifyMethod, $hook) {
-				call_user_func($notifyMethod, $hook, $payload);
+			Resque_Event::listen($hook, function() use ($notifyMethod, $hook) {
+				$payload = func_get_args();
+				array_unshift($payload, $hook);
+
+				call_user_func_array($notifyMethod, $payload);
 			});
 		}
 	}
