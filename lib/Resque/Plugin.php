@@ -3,6 +3,7 @@
 namespace Resque;
 use \Resque_Event;
 use \Resque_Job;
+use \Exception;
 
 class Plugin {
 
@@ -39,20 +40,29 @@ class Plugin {
 	 * @param  string 	$hook 			which hook to run
 	 * @param  mixed 	$jobOrFailure 	job for which to run the plugins
 	 */
-	public static function notify_plugins($hook, $jobOrFailure) {
-		if ($hook === 'onFailure') {
-			$job = $jobOrFailure['job'];
-			$exception = $jobOrFailure['exception'];
-		} else {
+	public static function notify_plugins($hook, $jobOrFailure, $job = null) {
+		if ($jobOrFailure instanceof Resque_Job) {
 			$job = $jobOrFailure;
 			$exception = null;
+		} elseif ($jobOrFailure instanceof Exception) {
+			$exception = $jobOrFailure;
+		} else {
+			// TODO: review this choice, not sure if it's the right thing to do
+			return; // fail silently if we don't know how to handle this
 		}
 
 		$plugins = static::plugins($job, $hook);
 
 		foreach ($plugins as $plugin) {
-			if (is_callable($plugin)) {
-				call_user_func($plugin, $job->getInstance(), $exception);
+			$callable = array($plugin, $hook);
+			if (is_callable($callable)) {
+				$payload = array($job, $job->getInstance());
+				
+				if (!is_null($exception)) {
+					array_push($payload, $exception);
+				}
+
+				call_user_func_array($callable, $payload);
 			}
 		}
 	} 
