@@ -78,13 +78,13 @@ class Plugin {
 	 * @return array 	of plugins for the job
 	 */
 	public static function plugins(Resque_Job $job, $hook = null) {
-		$jobClass = $job->getClass();
+		$jobName = (string) $job;
 
-		if (!array_key_exists($jobClass, static::$_pluginInstances)) {
-			static::$_pluginInstances[$jobClass] = static::createInstances($jobClass);
+		if (!array_key_exists($jobName, static::$_pluginInstances)) {
+			static::$_pluginInstances[$jobName] = static::createInstances($job);
 		}
 
-		$instances = static::$_pluginInstances[$jobClass];
+		$instances = static::$_pluginInstances[$jobName];
 
 		if (empty($hook) or empty($instances)) {
 			return $instances;
@@ -97,11 +97,12 @@ class Plugin {
 
 	/**
 	 * Create instances of the plugins for the specified job class
-	 * @param 	string $jobClass 
-	 * @return  array  of plugin instances for this job class
+	 * @param 	Resque_Job	$job 
+	 * @return  array  		of plugin instances for this job class
 	 */
-	public static function createInstances($jobClass) {
+	public static function createInstances($job) {
 		$instances = array();
+		$jobClass = $job->getClass();
 
 		if (property_exists($jobClass, 'resquePlugins')) {
 			$pluginClasses = $jobClass::$resquePlugins;
