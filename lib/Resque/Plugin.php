@@ -62,7 +62,7 @@ class Plugin {
 				$payload = array($job, $job->getInstance());
 				
 				if (!is_null($exception)) {
-					array_push($payload, $exception);
+					array_unshift($payload, $exception);
 				}
 
 				call_user_func_array($callable, $payload);
